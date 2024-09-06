@@ -94,7 +94,7 @@
     <div class="container">
         <div class="header">
             <h1>BYK YAPI MARKET</h1>
-            <img src="logo1.png" alt="Yapi Market Logo">
+            <img src="logo2.png" alt="Yapi Market Logo">
         </div>
         <div class="nav">
             <button onclick="showSection('add-stock')">Stok Ekle</button>
@@ -165,7 +165,7 @@
 
         async function saveStockData(stockData) {
             await fetch(apiUrl, {
-                method: 'POST',
+                method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(stockData)
             });
@@ -193,48 +193,4 @@
                                 <option value="weight">Kilo</option>
                             </select>
                             <input type="number" id="reduction-amount-${product.name}" placeholder="Miktar" min="0" step="0.01">
-                            <button onclick="reduceStock('${product.name}')">Stok Düşür</button>
-                        </div>
-                    `;
-                    stockList.appendChild(item);
-                });
-            });
-        }
-
-        function showReductionForm(name) {
-            const form = document.getElementById('reduction-form-' + name);
-            form.style.display = form.style.display === 'none' || form.style.display === '' ? 'block' : 'none';
-        }
-
-        async function reduceStock(name) {
-            const type = document.getElementById('reduction-type-' + name).value;
-            const amount = parseFloat(document.getElementById('reduction-amount-' + name).value) || 0;
-
-            let stockData = await fetchStockData();
-            const product = stockData.find(p => p.name === name);
-            if (product) {
-                if (type === 'quantity') {
-                    product.quantity = Math.max(0, product.quantity - amount);
-                } else if (type === 'length') {
-                    product.length = Math.max(0, product.length - amount);
-                } else if (type === 'weight') {
-                    product.weight = Math.max(0, product.weight - amount);
-                }
-                if (product.quantity === 0 && product.length === 0 && product.weight === 0) {
-                    const index = stockData.indexOf(product);
-                    stockData.splice(index, 1);
-                }
-                await saveStockData(stockData);
-                updateStockList();
-            }
-        }
-
-        function clearStockForm() {
-            document.getElementById('product-name').value = '';
-            document.getElementById('quantity').value = '';
-            document.getElementById('length').value = '';
-            document.getElementById('weight').value = '';
-        }
-    </script>
-</body>
-</html>
+                            <button onclick="reduceStock('${product.name}')">St
