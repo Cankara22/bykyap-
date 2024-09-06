@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BYK YAPI MARKET - Stok Yönetim Sistemi</title>
-    <link rel="icon" href="logo2.png" type="image/png"> <!-- Favicon -->
+    <link rel="icon" href="logo2.png" type="image/png">
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
             background-color: #f4f4f4;
-            background-image: url('logo1.png'); /* Arka plan resmi */
+            background-image: url('logo1.png');
             background-size: cover;
             background-repeat: no-repeat;
             background-attachment: fixed;
@@ -20,7 +20,7 @@
             width: 80%;
             margin: 0 auto;
             padding: 20px;
-            background-color: rgba(255, 255, 255, 0.8); /* İçeriği biraz belirginleştirmek için */
+            background-color: rgba(255, 255, 255, 0.8);
             border-radius: 10px;
         }
         .header {
@@ -121,7 +121,8 @@
     </div>
 
     <script>
-        // Sayfa yüklendiğinde stok verilerini LocalStorage'dan al
+        const apiUrl = 'http://localhost:3000/api/stocks'; // Backend API URL
+
         document.addEventListener('DOMContentLoaded', loadStockData);
 
         function showSection(sectionId) {
@@ -131,7 +132,7 @@
             document.getElementById(sectionId).classList.add('active');
         }
 
-        function addStock() {
+        async function addStock() {
             const name = document.getElementById('product-name').value;
             const quantity = parseFloat(document.getElementById('quantity').value) || 0;
             const length = parseFloat(document.getElementById('length').value) || 0;
@@ -142,7 +143,7 @@
                 return;
             }
 
-            const stockData = getStockData();
+            let stockData = await fetchStockData();
             const product = stockData.find(p => p.name === name);
             if (product) {
                 product.quantity += quantity;
@@ -152,87 +153,53 @@
                 stockData.push({ name, quantity, length, weight });
             }
 
-            saveStockData(stockData);
+            await saveStockData(stockData);
             updateStockList();
             clearStockForm();
         }
 
-        function updateStockList() {
-            const stockList = document.getElementById('stock-list');
-            const stockData = getStockData();
-            stockList.innerHTML = '';
+        async function fetchStockData() {
+            const response = await fetch(apiUrl);
+            return await response.json();
+        }
 
-            stockData.forEach(product => {
-                const item = document.createElement('div');
-                item.className = 'stock-item';
-                item.innerHTML = `
-                    <h3>${product.name}</h3>
-                    <p>Adet: ${product.quantity}</p>
-                    <p>Metre: ${product.length}</p>
-                    <p>Kilo: ${product.weight}</p>
-                    <button onclick="showReductionForm('${product.name}')">Stok Düşür</button>
-                    <div id="reduction-form-${product.name}" class="stock-form" style="display: none;">
-                        <h4>Stok Düşür</h4>
-                        <select id="reduction-type-${product.name}">
-                            <option value="quantity">Adet</option>
-                            <option value="length">Metre</option>
-                            <option value="weight">Kilo</option>
-                        </select>
-                        <input type="number" id="reduction-amount-${product.name}" placeholder="Miktar" min="0" step="0.01">
-                        <button onclick="reduceStock('${product.name}')">Stok Düşür</button>
-                    </div>
-                `;
-                stockList.appendChild(item);
+        async function saveStockData(stockData) {
+            await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(stockData)
+            });
+        }
+
+        function updateStockList() {
+            fetchStockData().then(stockData => {
+                const stockList = document.getElementById('stock-list');
+                stockList.innerHTML = '';
+
+                stockData.forEach(product => {
+                    const item = document.createElement('div');
+                    item.className = 'stock-item';
+                    item.innerHTML = `
+                        <h3>${product.name}</h3>
+                        <p>Adet: ${product.quantity}</p>
+                        <p>Metre: ${product.length}</p>
+                        <p>Kilo: ${product.weight}</p>
+                        <button onclick="showReductionForm('${product.name}')">Stok Düşür</button>
+                        <div id="reduction-form-${product.name}" class="stock-form" style="display: none;">
+                            <h4>Stok Düşür</h4>
+                            <select id="reduction-type-${product.name}">
+                                <option value="quantity">Adet</option>
+                                <option value="length">Metre</option>
+                                <option value="weight">Kilo</option>
+                            </select>
+                            <input type="number" id="reduction-amount-${product.name}" placeholder="Miktar" min="0" step="0.01">
+                            <button onclick="reduceStock('${product.name}')">Stok Düşür</button>
+                        </div>
+                    `;
+                    stockList.appendChild(item);
+                });
             });
         }
 
         function showReductionForm(name) {
-            const form = document.getElementById('reduction-form-' + name);
-            form.style.display = form.style.display === 'none' || form.style.display === '' ? 'block' : 'none';
-        }
-
-        function reduceStock(name) {
-            const type = document.getElementById('reduction-type-' + name).value;
-            const amount = parseFloat(document.getElementById('reduction-amount-' + name).value) || 0;
-
-            const stockData = getStockData();
-            const product = stockData.find(p => p.name === name);
-            if (product) {
-                if (type === 'quantity') {
-                    product.quantity = Math.max(0, product.quantity - amount);
-                } else if (type === 'length') {
-                    product.length = Math.max(0, product.length - amount);
-                } else if (type === 'weight') {
-                    product.weight = Math.max(0, product.weight - amount);
-                }
-                if (product.quantity === 0 && product.length === 0 && product.weight === 0) {
-                    const index = stockData.indexOf(product);
-                    stockData.splice(index, 1);
-                }
-                saveStockData(stockData);
-                updateStockList();
-            }
-        }
-
-        function clearStockForm() {
-            document.getElementById('product-name').value = '';
-            document.getElementById('quantity').value = '';
-            document.getElementById('length').value = '';
-            document.getElementById('weight').value = '';
-        }
-
-        function saveStockData(stockData) {
-            localStorage.setItem('stockData', JSON.stringify(stockData));
-        }
-
-        function getStockData() {
-            const data = localStorage.getItem('stockData');
-            return data ? JSON.parse(data) : [];
-        }
-
-        function loadStockData() {
-            updateStockList();
-        }
-    </script>
-</body>
-</html>
+           
