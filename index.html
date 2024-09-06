@@ -31,7 +31,7 @@
             border-radius: 5px;
         }
         .header img {
-            max-width: 100%;
+            max-width: 80%; /* Logoyu küçültme */
             height: auto;
             display: block;
             margin: 0 auto;
@@ -232,4 +232,12 @@
                 } else if (type === 'weight') {
                     product.weight = Math.max(0, product.weight - amount);
                 }
-                if (product.quantity
+                await saveStockData(stockData);
+                updateStockList();
+            }
+        }
+
+        function clearStockForm() {
+            document.getElementById('product-name').value = '';
+            document.getElementById('quantity').value = '';
+            document.getElementById('length').value
