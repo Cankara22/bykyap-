@@ -31,7 +31,7 @@
             border-radius: 5px;
         }
         .header img {
-            max-width: 80%; /* Logoyu küçültme */
+            max-width: 60%; /* Logoyu küçültme */
             height: auto;
             display: block;
             margin: 0 auto;
@@ -223,21 +223,4 @@
             const amount = parseFloat(document.getElementById('reduction-amount-' + name).value) || 0;
 
             let stockData = await fetchStockData();
-            const product = stockData.find(p => p.name === name);
-            if (product) {
-                if (type === 'quantity') {
-                    product.quantity = Math.max(0, product.quantity - amount);
-                } else if (type === 'length') {
-                    product.length = Math.max(0, product.length - amount);
-                } else if (type === 'weight') {
-                    product.weight = Math.max(0, product.weight - amount);
-                }
-                await saveStockData(stockData);
-                updateStockList();
-            }
-        }
-
-        function clearStockForm() {
-            document.getElementById('product-name').value = '';
-            document.getElementById('quantity').value = '';
-            document.getElementById('length').value
+            const product = stockData.find(p => p.name === name
