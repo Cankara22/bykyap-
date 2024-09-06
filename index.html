@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BYK YAPI MARKET - Stok Yönetim Sistemi</title>
+    <link rel="icon" href="logo2.png" type="image/png"> <!-- Favicon -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            background-image: url('logo1.png'); /* Arka plan resmi */
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+        .container {
+            width: 80%;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.8); /* İçeriği biraz belirginleştirmek için */
+            border-radius: 10px;
+        }
+        .header {
+            text-align: center;
+            padding: 20px;
+            background-color: #007BFF;
+            color: white;
+            border-radius: 5px;
+        }
+        .header img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+        .nav {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .nav button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 0 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .nav button:hover {
+            background-color: #0056b3;
+        }
+        .section {
+            display: none;
+            margin-bottom: 20px;
+        }
+        .section.active {
+            display: block;
+        }
+        .section h2 {
+            margin-top: 0;
+        }
+        .product-item, .stock-item {
+            background-color: #fff;
+            padding: 15px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .product-item button, .stock-item button, .stock-form button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .product-item button:hover, .stock-item button:hover, .stock-form button:hover {
+            background-color: #0056b3;
+        }
+        .stock-form input, .stock-form select {
+            margin-bottom: 10px;
+            padding: 8px;
+            width: calc(100% - 20px);
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>BYK YAPI MARKET</h1>
+            <img src="logo1.png" alt="Yapi Market Logo">
+        </div>
+        <div class="nav">
+            <button onclick="showSection('add-stock')">Stok Ekle</button>
+            <button onclick="showSection('view-stock')">Stokları Görüntüle</button>
+        </div>
+        
+        <div id="add-stock" class="section">
+            <h2>Stok Ekleme</h2>
+            <div class="stock-form">
+                <input type="text" id="product-name" placeholder="Ürün Adı">
+                <input type="number" id="quantity" placeholder="Adet" min="0">
+                <input type="number" id="length" placeholder="Metre" min="0" step="0.01">
+                <input type="number" id="weight" placeholder="Kilo" min="0" step="0.01">
+                <button onclick="addStock()">Stok Ekle</button>
+            </div>
+        </div>
+        
+        <div id="view-stock" class="section">
+            <h2>Mevcut Stoklar</h2>
+            <div id="stock-list">
+                <!-- Stoklar buraya eklenecek -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sayfa yüklendiğinde stok verilerini LocalStorage'dan al
+        document.addEventListener('DOMContentLoaded', loadStockData);
+
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(sectionId).classList.add('active');
+        }
+
+        function addStock() {
+            const name = document.getElementById('product-name').value;
+            const quantity = parseFloat(document.getElementById('quantity').value) || 0;
+            const length = parseFloat(document.getElementById('length').value) || 0;
+            const weight = parseFloat(document.getElementById('weight').value) || 0;
+
+            if (!name || quantity < 0 || length < 0 || weight < 0) {
+                alert('Lütfen geçerli bilgiler girin.');
+                return;
+            }
+
+            const stockData = getStockData();
+            const product = stockData.find(p => p.name === name);
+            if (product) {
+                product.quantity += quantity;
+                product.length += length;
+                product.weight += weight;
+            } else {
+                stockData.push({ name, quantity, length, weight });
+            }
+
+            saveStockData(stockData);
+            updateStockList();
+            clearStockForm();
+        }
+
+        function updateStockList() {
+            const stockList = document.getElementById('stock-list');
+            const stockData = getStockData();
+            stockList.innerHTML = '';
+
+            stockData.forEach(product => {
+                const item = document.createElement('div');
+                item.className = 'stock-item';
+                item.innerHTML = `
+                    <h3>${product.name}</h3>
+                    <p>Adet: ${product.quantity}</p>
+                    <p>Metre: ${product.length}</p>
+                    <p>Kilo: ${product.weight}</p>
+                    <button onclick="showReductionForm('${product.name}')">Stok Düşür</button>
+                    <div id="reduction-form-${product.name}" class="stock-form" style="display: none;">
+                        <h4>Stok Düşür</h4>
+                        <select id="reduction-type-${product.name}">
+                            <option value="quantity">Adet</option>
+                            <option value="length">Metre</option>
+                            <option value="weight">Kilo</option>
+                        </select>
+                        <input type="number" id="reduction-amount-${product.name}" placeholder="Miktar" min="0" step="0.01">
+                        <button onclick="reduceStock('${product.name}')">Stok Düşür</button>
+                    </div>
+                `;
+                stockList.appendChild(item);
+            });
+        }
+
+        function showReductionForm(name) {
+            const form = document.getElementById('reduction-form-' + name);
+            form.style.display = form.style.display === 'none' || form.style.display === '' ? 'block' : 'none';
+        }
+
+        function reduceStock(name) {
+            const type = document.getElementById('reduction-type-' + name).value;
+            const amount = parseFloat(document.getElementById('reduction-amount-' + name).value) || 0;
+
+            const stockData = getStockData();
+            const product = stockData.find(p => p.name === name);
+            if (product) {
+                if (type === 'quantity') {
+                    product.quantity = Math.max(0, product.quantity - amount);
+                } else if (type === 'length') {
+                    product.length = Math.max(0, product.length - amount);
+                } else if (type === 'weight') {
+                    product.weight = Math.max(0, product.weight - amount);
+                }
+                if (product.quantity === 0 && product.length === 0 && product.weight === 0) {
+                    const index = stockData.indexOf(product);
+                    stockData.splice(index, 1);
+                }
+                saveStockData(stockData);
+                updateStockList();
+            }
+        }
+
+        function clearStockForm() {
+            document.getElementById('product-name').value = '';
+            document.getElementById('quantity').value = '';
+            document.getElementById('length').value = '';
+            document.getElementById('weight').value = '';
+        }
+
+        function saveStockData(stockData) {
+            localStorage.setItem('stockData', JSON.stringify(stockData));
+        }
+
+        function getStockData() {
+            const data = localStorage.getItem('stockData');
+            return data ? JSON.parse(data) : [];
+        }
+
+        function loadStockData() {
+            updateStockList();
+        }
+    </script>
+</body>
+</html>
