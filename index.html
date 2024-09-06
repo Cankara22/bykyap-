@@ -123,7 +123,7 @@
     <script>
         const apiUrl = 'http://localhost:3000/api/stocks'; // Backend API URL
 
-        document.addEventListener('DOMContentLoaded', loadStockData);
+        document.addEventListener('DOMContentLoaded', updateStockList);
 
         function showSection(sectionId) {
             document.querySelectorAll('.section').forEach(section => {
@@ -218,4 +218,23 @@
                 } else if (type === 'length') {
                     product.length = Math.max(0, product.length - amount);
                 } else if (type === 'weight') {
-                    product.weight = Math.max(0, product
+                    product.weight = Math.max(0, product.weight - amount);
+                }
+                if (product.quantity === 0 && product.length === 0 && product.weight === 0) {
+                    const index = stockData.indexOf(product);
+                    stockData.splice(index, 1);
+                }
+                await saveStockData(stockData);
+                updateStockList();
+            }
+        }
+
+        function clearStockForm() {
+            document.getElementById('product-name').value = '';
+            document.getElementById('quantity').value = '';
+            document.getElementById('length').value = '';
+            document.getElementById('weight').value = '';
+        }
+    </script>
+</body>
+</html>
