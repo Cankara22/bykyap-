@@ -202,4 +202,20 @@
         }
 
         function showReductionForm(name) {
-           
+            const form = document.getElementById('reduction-form-' + name);
+            form.style.display = form.style.display === 'none' || form.style.display === '' ? 'block' : 'none';
+        }
+
+        async function reduceStock(name) {
+            const type = document.getElementById('reduction-type-' + name).value;
+            const amount = parseFloat(document.getElementById('reduction-amount-' + name).value) || 0;
+
+            let stockData = await fetchStockData();
+            const product = stockData.find(p => p.name === name);
+            if (product) {
+                if (type === 'quantity') {
+                    product.quantity = Math.max(0, product.quantity - amount);
+                } else if (type === 'length') {
+                    product.length = Math.max(0, product.length - amount);
+                } else if (type === 'weight') {
+                    product.weight = Math.max(0, product
